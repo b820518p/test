@@ -1,249 +1,413 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI 全息艙 - 粒子組成修復版</title>
+    <title>AI 全息艙 - 單面投影艙版</title>
     <style>
-        /* ================= 1. 基礎防跑版設定 ================= */
+        :root { --p: 0; }
+
         html, body {
             background-color: #000000 !important; color: #ffffff;
             margin: 0; padding: 0; width: 100vw; height: 100vh;
             position: fixed; top: 0; left: 0; bottom: 0; right: 0;
             overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center;
-            font-family: sans-serif; touch-action: none;
+            font-family: 'Courier New', monospace; touch-action: none;
         }
 
-        #subtitle {
-            position: absolute; top: max(30px, env(safe-area-inset-top)); 
-            left: 0; width: 100%; font-size: 18px; text-align: center; z-index: 5;
-            text-shadow: 0px 0px 10px #00d2ff; padding: 0 20px; box-sizing: border-box;
-            transition: 0.3s;
+        /* 💡 全息艙主體 (模擬圓柱或玻璃力場的感覺) */
+        #cabin-container {
+            position: relative; 
+            width: 85vw; max-width: 350px; 
+            height: 60vh; max-height: 500px;
+            margin-bottom: 60px;
+            /* 科幻邊框與底光 */
+            border-top: 3px solid rgba(0, 210, 255, 0.5);
+            border-bottom: 3px solid rgba(0, 210, 255, 0.5);
+            background: radial-gradient(ellipse at center, rgba(0, 210, 255, 0.1) 0%, transparent 70%);
+            box-shadow: 0 -15px 30px -15px rgba(0,210,255,0.3), 0 15px 30px -15px rgba(0,210,255,0.3);
+            border-radius: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
         }
 
-        /* ================= 2. 投影陣列與動畫 ================= */
-        #hologram-container { position: relative; width: 320px; height: 320px; transform-style: preserve-3d; }
-        
+        /* 取消四面梯形，改為全版面 */
         .holo-wrapper {
-            position: absolute; width: 150px; height: 150px;
-            top: 50%; left: 50%; margin-top: -75px; margin-left: -75px;
-            clip-path: polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%);
+            width: 100%; height: 90%; /* 留一點空間給上下邊界 */
+            position: relative;
         }
 
+        /* 圖片本體 */
         .holo-image {
             width: 100%; height: 100%;
+            background-image: var(--bg-img);
             background-size: contain; background-repeat: no-repeat; background-position: center bottom;
-            background-image: url('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
-            /* 💡 關鍵修復：預設為 1，這樣動畫結束交接時才不會消失 */
-            opacity: 1; 
+            position: relative;
+            clip-path: inset(calc(100% - (var(--p) * 1%)) 0 0 0);
+            filter: brightness(1.2);
+            z-index: 1;
         }
 
-        /* 科幻粒子組成動畫 */
-        .assemble-anim {
-            animation: assemble 2.5s forwards ease-out;
+        /* 艙內立體字幕 */
+        .holo-sub {
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            width: 90%; text-align: center; color: #00d2ff; font-size: 14px; font-weight: bold;
+            text-shadow: 0 0 5px #00d2ff, 0 0 10px #000; z-index: 20;
+            pointer-events: none; word-wrap: break-word;
         }
 
-        @keyframes assemble {
-            0% { 
-                opacity: 0; 
-                filter: brightness(5) blur(20px) contrast(2);
-                transform: scale(0.8) translateY(20px);
-            }
-            50% { 
-                opacity: 0.8; 
-                filter: brightness(2) blur(5px) contrast(1.5);
-            }
-            100% { 
-                opacity: 1; 
-                filter: brightness(1) blur(0px) contrast(1);
-                transform: scale(1) translateY(0px);
-            }
+        /* 科技藍色掃描線 */
+        .scan-line {
+            position: absolute; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, #00d2ff, #fff, #00d2ff, transparent);
+            box-shadow: 0 0 20px #00d2ff, 0 0 10px #fff;
+            top: calc(100% - (var(--p) * 1%));
+            display: none; z-index: 5; pointer-events: none;
         }
 
-        /* 平時呼吸動畫 */
-        .idle-breathe {
-            animation: float3D 4s infinite ease-in-out;
+        .scanning .scan-line { display: block; }
+        .scanning .holo-image { animation: tech-flicker 0.2s infinite; }
+        @keyframes tech-flicker {
+            0%, 100% { opacity: 1; filter: brightness(1.2); }
+            50% { opacity: 0.8; filter: brightness(1.8); }
         }
 
+        /* 平時呼吸 */
+        .idle-breathe { animation: float3D 4s infinite ease-in-out; }
         @keyframes float3D {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-8px); }
         }
 
-        /* 說話時的動態 */
-        .is-talking { animation: talkingAnim 0.15s infinite !important; }
-        @keyframes talkingAnim {
-            0%, 100% { transform: scaleY(1) scaleX(1); }
-            50% { transform: scaleY(1.03) scaleX(0.98); }
+        /* 電影級華麗特效：緩慢呼吸光暈 + 垂直全息掃描層 */
+        .is-talking {
+            image-rendering: pixelated;
+            animation: cinematic-pulse 2s infinite alternate ease-in-out;
+        }
+        .is-talking::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: var(--bg-img); background-size: contain; background-repeat: no-repeat; background-position: center bottom;
+            filter: brightness(1.6) contrast(1.2) drop-shadow(0 0 8px #00d2ff);
+            opacity: 0.6; z-index: 2; mix-blend-mode: screen;
+            animation: cinematic-scan 2.5s infinite linear;
         }
 
-        #front-wrapper { transform: translateY(130px); }
-        #back-wrapper { transform: translateY(-130px) rotate(180deg); }
-        #left-wrapper { transform: translateX(-130px) rotate(90deg); }
-        #right-wrapper { transform: translateX(130px) rotate(-90deg); }
+        @keyframes cinematic-pulse {
+            0% { filter: brightness(1.1) drop-shadow(0 0 5px rgba(0, 210, 255, 0.4)); }
+            100% { filter: brightness(1.4) drop-shadow(0 0 20px rgba(0, 210, 255, 0.9)); }
+        }
+        @keyframes cinematic-scan {
+            0% { clip-path: inset(0% 0 95% 0); transform: translateY(-1px); }
+            50% { clip-path: inset(48% 0 48% 0); transform: translateY(0px); }
+            100% { clip-path: inset(95% 0 0% 0); transform: translateY(1px); }
+        }
 
-        /* ================= 3. UI 佈局 ================= */
-        #interaction-bar {
-            position: absolute; bottom: max(15px, env(safe-area-inset-bottom));
-            width: 100%; display: flex; justify-content: center; align-items: center; z-index: 100;
+        /* ================= 整合互動區 ================= */
+        #interaction-area {
+            position: absolute; bottom: max(25px, env(safe-area-inset-bottom));
+            width: 100%; display: flex; flex-direction: column; align-items: center; z-index: 100;
+        }
+
+        #main-subtitle {
+            color: #00d2ff; font-size: 15px; font-weight: bold; margin-bottom: 12px;
+            text-shadow: 0 0 8px rgba(0,210,255,0.8); text-align: center; padding: 0 20px;
         }
 
         .mic-btn {
-            background-color: rgba(0, 210, 255, 0.2); color: #00d2ff; border: 1px solid #00d2ff;
-            padding: 12px 30px; border-radius: 50px; font-size: 16px; font-weight: bold; cursor: pointer;
-            backdrop-filter: blur(5px); transition: 0.3s; box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+            background-color: rgba(0, 210, 255, 0.1); color: #00d2ff; border: 1px solid #00d2ff;
+            padding: 14px 40px; border-radius: 50px; font-size: 16px; font-weight: bold; letter-spacing: 1px;
+            backdrop-filter: blur(10px); box-shadow: 0 0 15px rgba(0, 210, 255, 0.2); cursor: pointer;
+            transition: 0.3s;
         }
-
-        .mic-btn.listening {
-            background-color: rgba(255, 0, 0, 0.3); border-color: #ff4d4d; color: #ff4d4d;
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5); animation: pulse 1.5s infinite;
+        
+        .mic-btn.active-loop { 
+            background-color: rgba(255, 50, 50, 0.2); border-color: #ff4d4d; color: #ff4d4d; 
+            box-shadow: 0 0 20px rgba(255, 50, 50, 0.4); animation: pulse 1.5s infinite;
         }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        #gear-btn { position: absolute; top: 15px; right: 15px; color: #555; background: none; border: none; font-size: 24px; z-index: 110; cursor: pointer; }
 
-        #gear-btn {
-            position: absolute; top: 15px; right: 15px; background: none; border: none; color: #333; font-size: 20px; cursor: pointer; z-index: 110;
-        }
-
+        /* 設定面板 (簡化為單一上傳) */
         #settings-panel {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.96); z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center;
         }
-
-        .settings-content {
-            width: 85%; max-width: 350px; background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333;
-        }
-
-        .api-group { display: flex; gap: 8px; margin-bottom: 20px; }
-        .api-group input { flex: 1; background: #000; border: 1px solid #444; color: #0f0; padding: 8px; border-radius: 5px; }
-        .api-group button { background: #00d2ff; color: #000; border: none; padding: 8px 12px; border-radius: 5px; font-weight: bold; }
-
-        .upload-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; }
-        .upload-btn { background: #333; color: #fff; padding: 6px 12px; border-radius: 5px; cursor: pointer; }
+        .settings-content { width: 85%; max-width: 360px; background: #111; padding: 25px; border-radius: 20px; border: 1px solid #333; }
+        .api-group { display: flex; gap: 8px; margin-bottom: 25px; }
+        .api-group input { flex: 1; background: #000; border: 1px solid #333; color: #0f0; padding: 12px; border-radius: 8px; }
+        .api-group button { background: #00d2ff; color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; }
+        
+        .upload-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding: 15px; background: #1a1a1a; border-radius: 12px;}
+        .upload-row span { font-weight: bold; color: #00d2ff; }
+        .upload-btn { background: #00d2ff; color: #000; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         input[type="file"] { display: none; }
-        .close-settings { width: 100%; margin-top: 20px; padding: 10px; background: #444; color: #fff; border: none; border-radius: 5px; }
-
+        .close-settings { width: 100%; padding: 14px; background: #00d2ff; color: #000; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; letter-spacing: 1px;}
     </style>
 </head>
 <body>
 
-    <div id="subtitle">系統待命中心</div>
     <button id="gear-btn" onclick="toggleSettings(true)">⚙️</button>
 
-    <div id="hologram-container">
-        <div id="back-wrapper" class="holo-wrapper"><div id="back-img" class="holo-image"></div></div>
-        <div id="left-wrapper" class="holo-wrapper"><div id="left-img" class="holo-image"></div></div>
-        <div id="right-wrapper" class="holo-wrapper"><div id="right-img" class="holo-image"></div></div>
-        <div id="front-wrapper" class="holo-wrapper"><div id="front-img" class="holo-image"></div></div>
+    <div id="cabin-container">
+        <div class="holo-wrapper">
+            <div id="main-img" class="holo-image" style="--bg-img: url('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')"></div>
+            <div class="scan-line"></div>
+        </div>
+        <div class="holo-sub" id="cabin-sub"></div>
     </div>
 
-    <div id="interaction-bar">
-        <button id="mic-btn" class="mic-btn" onclick="toggleListening()">🎤 啟動語音指令</button>
+    <div id="interaction-area">
+        <div id="main-subtitle">SYSTEM STANDBY...</div>
+        <button id="mic-btn" class="mic-btn" onclick="toggleSystemLoop()">🎤 啟動雙向通訊</button>
     </div>
 
     <div id="settings-panel">
         <div class="settings-content">
-            <h3 style="text-align:center; margin-top:0;">核心參數設定</h3>
+            <h3 style="text-align:center; margin-top:0; color:#00d2ff; letter-spacing: 2px;">CABIN CONFIG</h3>
             <div class="api-group">
                 <input type="password" id="api-input" placeholder="Gemini API Key">
-                <button onclick="saveApiKey()">儲存</button>
+                <button onclick="saveApiKey()">SAVE</button>
             </div>
-            <div id="api-status" style="font-size:12px; text-align:center; color:#888; margin-bottom:15px;">API 尚未就緒</div>
+            <div id="api-status" style="font-size:12px; text-align:center; color:#555; margin-bottom:15px;">WAITING FOR KEY...</div>
 
-            <div class="upload-row"><span>前視</span><label for="up-front" class="upload-btn">上傳</label><input type="file" id="up-front" accept="image/*"></div>
-            <div class="upload-row"><span>後視</span><label for="up-back" class="upload-btn">上傳</label><input type="file" id="up-back" accept="image/*"></div>
-            <div class="upload-row"><span>左視</span><label for="up-left" class="upload-btn">上傳</label><input type="file" id="up-left" accept="image/*"></div>
-            <div class="upload-row"><span>右視</span><label for="up-right" class="upload-btn">上傳</label><input type="file" id="up-right" accept="image/*"></div>
+            <div class="upload-row">
+                <span>CHARACTER</span>
+                <label for="up-main" class="upload-btn">UPLOAD</label>
+                <input type="file" id="up-main" accept="image/*">
+            </div>
             
-            <button class="close-settings" onclick="toggleSettings(false)">完成並關閉</button>
+            <button class="close-settings" onclick="deploySystem()">DEPLOY SYSTEM (上線)</button>
         </div>
     </div>
 
     <script>
-        const subtitle = document.getElementById('subtitle');
+        const mainSubtitle = document.getElementById('main-subtitle');
+        const cabinSub = document.getElementById('cabin-sub');
         const apiStatus = document.getElementById('api-status');
         const apiInput = document.getElementById('api-input');
         const micBtn = document.getElementById('mic-btn');
-        const holoImages = document.querySelectorAll('.holo-image');
+        const holoImages = document.querySelectorAll('.holo-image'); // 仍然用 NodeList 相容舊邏輯
+        const container = document.getElementById('cabin-container');
 
         let API_KEY = localStorage.getItem('gemini_hologram_key') || '';
-        if (API_KEY) { apiInput.value = API_KEY; apiStatus.innerText = "✅ 核心 API 已就緒"; }
+        if (API_KEY) { apiInput.value = API_KEY; apiStatus.innerText = "✅ API READY"; }
 
         function saveApiKey() { 
             const key = apiInput.value.trim();
-            if (key) { API_KEY = key; localStorage.setItem('gemini_hologram_key', key); apiStatus.innerText = "✅ 儲存成功"; } 
+            if (key) { API_KEY = key; localStorage.setItem('gemini_hologram_key', key); apiStatus.innerText = "✅ SAVED"; } 
         }
 
-        function toggleSettings(show) { document.getElementById('settings-panel').style.display = show ? 'flex' : 'none'; }
+        // ================= 全局音效解鎖器 =================
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
 
-        function setupUpload(inputId, imgId) {
-            document.getElementById(inputId).addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) { 
-                        const img = document.getElementById(imgId);
-                        img.style.backgroundImage = `url('${e.target.result}')`;
-                        
-                        // 💡 關鍵修復：先移除所有的動畫 class，確保乾淨重置
-                        img.classList.remove('idle-breathe', 'assemble-anim');
-                        void img.offsetWidth; // 強制重繪
-                        
-                        // 1. 加上組裝動畫
-                        img.classList.add('assemble-anim');
-                        
-                        // 2. 組裝結束後，移除組裝動畫，換成呼吸動畫
-                        setTimeout(() => { 
-                            img.classList.remove('assemble-anim');
-                            img.classList.add('idle-breathe'); 
-                        }, 2500);
-                        
-                        document.querySelector(`label[for="${inputId}"]`).innerText = "OK";
-                    }
-                    reader.readAsDataURL(file);
+        function toggleSettings(show) { 
+            if (show) initAudio(); 
+            document.getElementById('settings-panel').style.display = show ? 'flex' : 'none'; 
+        }
+
+        // ================= 更新字幕 =================
+        function updateSubtitles(text) {
+            mainSubtitle.innerText = text;
+            cabinSub.innerText = text;
+        }
+
+        // ================= 音效模組 =================
+        function playBeep() {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.8, audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+            } catch(e) {}
+        }
+
+        function playDeployScanSound() {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(50, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 4.5); 
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 4.5);
+                
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 4.5);
+
+                setTimeout(() => {
+                    [300, 450, 600].forEach(freq => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'square';
+                        o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                        g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+                        o.connect(g); g.connect(audioCtx.destination);
+                        o.start(); o.stop(audioCtx.currentTime + 1.5);
+                    });
+                }, 4500);
+            } catch(e) {}
+        }
+
+        // ================= 掃描與上傳邏輯 =================
+        function deploySystem() {
+            toggleSettings(false);
+            updateSubtitles("INITIALIZING...");
+            
+            container.classList.add('scanning');
+            playDeployScanSound();
+            holoImages.forEach(img => img.classList.remove('idle-breathe'));
+            
+            let startTime = null;
+            const duration = 4500;
+
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsed = timestamp - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                document.documentElement.style.setProperty('--p', (progress * 100));
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    container.classList.remove('scanning');
+                    holoImages.forEach(img => img.classList.add('idle-breathe'));
+                    updateSubtitles("CABIN SYSTEM ONLINE");
                 }
-            });
+            }
+            requestAnimationFrame(animate);
         }
-        setupUpload('up-front', 'front-img'); setupUpload('up-back', 'back-img'); setupUpload('up-left', 'left-img'); setupUpload('up-right', 'right-img');
 
+        document.getElementById('up-main').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { 
+                    document.getElementById('main-img').style.setProperty('--bg-img', `url('${e.target.result}')`); 
+                    playBeep(); 
+                    document.querySelector(`label[for="up-main"]`).innerText = "SET";
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // ================= 雙向通訊系統 =================
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
-        let isListening = false;
+        let isSystemActive = false; 
+        let isWaitingForGemini = false;
 
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
             recognition.lang = 'zh-TW';
-            recognition.onstart = () => { isListening = true; micBtn.classList.add('listening'); micBtn.innerText = "🛑 系統聆聽中..."; };
-            recognition.onresult = (e) => { const text = e.results[0][0].transcript; subtitle.innerText = `You: ${text}`; sendToGemini(text); };
-            recognition.onend = () => { isListening = false; micBtn.classList.remove('listening'); micBtn.innerText = "🎤 啟動語音指令"; };
+            
+            recognition.onstart = () => { updateSubtitles("LISTENING..."); };
+            
+            recognition.onresult = (e) => { 
+                const text = e.results[0][0].transcript; 
+                updateSubtitles(`User: ${text}`); 
+                sendToGemini(text); 
+            };
+
+            recognition.onerror = (e) => {
+                if(e.error !== 'no-speech') {
+                    updateSubtitles(`Mic Error: ${e.error}`);
+                    stopSystemLoop();
+                }
+            };
+
+            recognition.onend = () => { 
+                if (isSystemActive && !isWaitingForGemini) {
+                    setTimeout(() => { try { recognition.start(); } catch(e){} }, 300);
+                }
+            };
         }
 
-        function toggleListening() {
-            if ('speechSynthesis' in window) {
-                const unlock = new SpeechSynthesisUtterance('');
-                window.speechSynthesis.speak(unlock);
+        function toggleSystemLoop() {
+            if (!API_KEY) { updateSubtitles("ERROR: API KEY MISSING"); return; }
+            
+            isSystemActive = !isSystemActive; 
+
+            if (isSystemActive) {
+                micBtn.classList.add('active-loop');
+                micBtn.innerText = "🛑 通訊連線中 (點擊關閉)";
+                
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); 
+                }
+                isWaitingForGemini = false;
+                try { recognition.start(); } catch(e){}
+
+            } else {
+                stopSystemLoop();
             }
-            if (isListening) recognition.stop(); else recognition.start();
         }
 
+        function stopSystemLoop() {
+            isSystemActive = false;
+            isWaitingForGemini = false;
+            micBtn.classList.remove('active-loop');
+            micBtn.innerText = "🎤 啟動雙向通訊";
+            updateSubtitles("SYSTEM STANDBY");
+            recognition.stop();
+        }
+
+        // ================= Gemini API =================
         async function sendToGemini(userText) {
-            subtitle.innerText = "正在分析指令...";
+            isWaitingForGemini = true; 
+            updateSubtitles("PROCESSING...");
+            
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+            
             try {
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: userText }] }],
-                        systemInstruction: { parts: [{ text: "你是一個科幻的全息 AI 助理。講話簡短、專業且有禮。字數控制在 20 字內。" }] }
+                        systemInstruction: { parts: [{ text: "你是一個科幻的全息艙 AI 助理。講話極度簡短、專業。每次回覆不得超過 20 字。" }] }
                     })
                 });
+                
                 const data = await response.json();
+
+                if (!response.ok) {
+                    if (response.status === 429) {
+                        updateSubtitles("⚠️ 請求頻繁，請等待 1 分鐘");
+                    } else if (response.status === 503) {
+                        updateSubtitles("⚠️ 系統忙碌中 (503)，請重試");
+                    } else {
+                        updateSubtitles(`SYS_ERR: ${response.status}`);
+                    }
+                    isWaitingForGemini = false;
+                    return;
+                }
+
                 const replyText = data.candidates[0].content.parts[0].text;
-                subtitle.innerText = replyText;
+                updateSubtitles(replyText);
                 speak(replyText);
-            } catch (e) { subtitle.innerText = "核心連線異常"; }
+                
+            } catch (error) {
+                updateSubtitles("CONNECTION_FAIL");
+                isWaitingForGemini = false;
+            }
         }
 
         function speak(text) {
@@ -251,9 +415,17 @@
                 window.speechSynthesis.cancel();
                 const msg = new SpeechSynthesisUtterance(text);
                 msg.lang = 'zh-TW';
-                msg.rate = 1.1;
+                
                 msg.onstart = () => holoImages.forEach(i => i.classList.add('is-talking'));
-                msg.onend = () => holoImages.forEach(i => i.classList.remove('is-talking'));
+                
+                msg.onend = () => {
+                    holoImages.forEach(i => i.classList.remove('is-talking'));
+                    isWaitingForGemini = false;
+                    
+                    if (isSystemActive) {
+                        setTimeout(() => { try { recognition.start(); } catch(e){} }, 500);
+                    }
+                };
                 window.speechSynthesis.speak(msg);
             }
         }
