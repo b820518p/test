@@ -145,6 +145,15 @@
         .upload-btn { background: #00d2ff; color: #000; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         input[type="file"] { display: none; }
         .close-settings { width: 100%; padding: 14px; background: #00d2ff; color: #000; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; letter-spacing: 1px;}
+/* ================= 擴充：超時消散特效 ================= */
+        .dissipating .holo-image {
+            animation: sci-fi-dissipate 1.5s forwards ease-in;
+        }
+        @keyframes sci-fi-dissipate {
+            0% { filter: brightness(1.2); opacity: 1; transform: scale(1); }
+            50% { filter: brightness(2) hue-rotate(90deg); opacity: 0.8; transform: scale(1.05) skewX(5deg); image-rendering: pixelated; }
+            100% { filter: brightness(0); opacity: 0; transform: scale(0.8) translateY(30px); clip-path: inset(100% 0 0 0); }
+        }
     </style>
 </head>
 <body>
@@ -292,6 +301,7 @@
                     container.classList.remove('scanning');
                     holoImages.forEach(img => img.classList.add('idle-breathe'));
                     updateSubtitles("CABIN SYSTEM ONLINE");
+resetStandbyTimer();
                 }
             }
             requestAnimationFrame(animate);
@@ -428,10 +438,108 @@
                     if (isSystemActive) {
                         setTimeout(() => { try { recognition.start(); } catch(e){} }, 500);
                     }
+resetStandbyTimer();
                 };
                 window.speechSynthesis.speak(msg);
             }
         }
+// ================= 擴充：20秒待命消散與喚醒系統 =================
+        let standbyTimer = null;
+        let isHoloAwake = true;
+        const STANDBY_LIMIT = 20000; // 20秒
+
+        // 重新計算 20 秒
+        function resetStandbyTimer() {
+            clearTimeout(standbyTimer);
+            if (isHoloAwake) {
+                standbyTimer = setTimeout(dissipateHolo, STANDBY_LIMIT);
+            }
+        }
+
+        // 科技斷電音效 (音調往下掉)
+        function playPowerDownSound() {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 1.2);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 1.2);
+            } catch(e) {}
+        }
+
+        // 執行消散
+        function dissipateHolo() {
+            if (!isHoloAwake) return;
+            isHoloAwake = false;
+            stopSystemLoop(); // 強制關閉麥克風
+            updateSubtitles("SYSTEM SLEEP (等待喚醒)");
+            playPowerDownSound();
+            
+            container.classList.add('dissipating');
+            
+            // 1.5秒動畫結束後，徹底將變數歸零隱藏
+            setTimeout(() => {
+                document.documentElement.style.setProperty('--p', 0);
+                container.classList.remove('dissipating');
+            }, 1500);
+        }
+
+        // 執行重新喚醒
+        function wakeUpHolo() {
+            isHoloAwake = true;
+            updateSubtitles("SYSTEM WAKE UP...");
+            container.classList.add('scanning');
+            playDeployScanSound(); // 借用上線時的 4.5 秒科技音效
+            holoImages.forEach(img => img.classList.remove('idle-breathe'));
+            
+            let startTime = null;
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / 4500, 1);
+                document.documentElement.style.setProperty('--p', (progress * 100));
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    container.classList.remove('scanning');
+                    holoImages.forEach(img => img.classList.add('idle-breathe'));
+                    updateSubtitles("CABIN SYSTEM ONLINE");
+                    resetStandbyTimer(); // 喚醒後開始算 20 秒
+                    
+                    // 喚醒完成後，自動打開麥克風聽指令 (如果不需要自動聽，可刪除此行)
+                    setTimeout(toggleSystemLoop, 500);
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        // ================= 攔截實體按鈕 (空白鍵 / 畫面點擊) =================
+        function handleInteraction(e) {
+            if (e && e.type === 'keydown' && e.keyCode !== 32) return; // 只管空白鍵
+            if (e) e.preventDefault();
+
+            if (!isHoloAwake) {
+                wakeUpHolo(); // 如果睡著了，就喚醒並重生圖片與音效
+            } else {
+                resetStandbyTimer(); // 如果醒著，就重置20秒倒數
+                toggleSystemLoop(); // 並開關麥克風
+            }
+        }
+
+        // 綁定鍵盤與畫面點擊
+        window.addEventListener('keydown', handleInteraction);
+        // 如果用 iPhone 切換控制點擊畫面，會觸發這裡
+        document.getElementById('interaction-area').addEventListener('click', function(e) {
+            // 避免點擊按鈕時觸發兩次
+            if(e.target.id !== 'mic-btn') handleInteraction();
+        });
+        // 覆寫原本語音按鈕的 onclick
+        document.getElementById('mic-btn').onclick = handleInteraction;
     </script>
 </body>
 </html>
