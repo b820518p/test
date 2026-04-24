@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI 全息艙 - 單面投影艙版</title>
+    <title>AI 全息艙 - 動態生命體版</title>
     <style>
         :root { --p: 0; }
 
@@ -15,42 +15,36 @@
             font-family: 'Courier New', monospace; touch-action: none;
         }
 
-        /* 💡 全息艙主體 (模擬圓柱或玻璃力場的感覺) */
         #cabin-container {
             position: relative; 
-           /* 將最大寬度限制在 280px (約等於手機螢幕的 7.5 公分比例) */
             width: 85vw; max-width: 280px; 
             height: 45vh; max-height: 400px;
             margin-bottom: 20vh;
-            /* 科幻邊框與底光 */
             border-top: 3px solid rgba(0, 210, 255, 0.5);
             border-bottom: 3px solid rgba(0, 210, 255, 0.5);
             background: radial-gradient(ellipse at center, rgba(0, 210, 255, 0.1) 0%, transparent 70%);
             box-shadow: 0 -15px 30px -15px rgba(0,210,255,0.3), 0 15px 30px -15px rgba(0,210,255,0.3);
             border-radius: 20px;
             display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-/* 讓畫面上下顛倒，反射後才是正的 */
-            transform: rotate(180deg);
+            transform: rotate(180deg); /* 鏡像翻轉，適應實體艙 */
         }
 
-        /* 取消四面梯形，改為全版面 */
         .holo-wrapper {
-            width: 100%; height: 90%; /* 留一點空間給上下邊界 */
+            width: 100%; height: 90%; 
             position: relative;
         }
 
-        /* 圖片本體 */
-        .holo-image {
+        /* 💡 雙引擎共用樣式 (支援 img 與 video) */
+        .holo-media {
             width: 100%; height: 100%;
-            background-image: var(--bg-img);
+            position: absolute; bottom: 0; left: 0;
             background-size: contain; background-repeat: no-repeat; background-position: center bottom;
-            position: relative;
+            object-fit: contain; /* 專為 video 比例設計 */
             clip-path: inset(calc(100% - (var(--p) * 1%)) 0 0 0);
             filter: brightness(1.2);
             z-index: 1;
         }
 
-        /* 艙內立體字幕 */
         .holo-sub {
             position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
             width: 90%; text-align: center; color: #00d2ff; font-size: 14px; font-weight: bold;
@@ -58,7 +52,6 @@
             pointer-events: none; word-wrap: break-word;
         }
 
-        /* 科技藍色掃描線 */
         .scan-line {
             position: absolute; left: 0; width: 100%; height: 2px;
             background: linear-gradient(90deg, transparent, #00d2ff, #fff, #00d2ff, transparent);
@@ -68,20 +61,18 @@
         }
 
         .scanning .scan-line { display: block; }
-        .scanning .holo-image { animation: tech-flicker 0.2s infinite; }
+        .scanning .holo-media { animation: tech-flicker 0.2s infinite; }
         @keyframes tech-flicker {
             0%, 100% { opacity: 1; filter: brightness(1.2); }
             50% { opacity: 0.8; filter: brightness(1.8); }
         }
 
-        /* 平時呼吸 */
         .idle-breathe { animation: float3D 4s infinite ease-in-out; }
         @keyframes float3D {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-8px); }
         }
 
-        /* 電影級華麗特效：緩慢呼吸光暈 + 垂直全息掃描層 */
         .is-talking {
             image-rendering: pixelated;
             animation: cinematic-pulse 2s infinite alternate ease-in-out;
@@ -104,33 +95,38 @@
             100% { clip-path: inset(95% 0 0% 0); transform: translateY(1px); }
         }
 
-        /* ================= 整合互動區 ================= */
+        /* 💡 擴充：20秒超時消散特效 */
+        .dissipating .holo-media {
+            animation: sci-fi-dissipate 1.5s forwards ease-in;
+        }
+        @keyframes sci-fi-dissipate {
+            0% { filter: brightness(1.2); opacity: 1; transform: scale(1); }
+            50% { filter: brightness(2) hue-rotate(90deg); opacity: 0.8; transform: scale(1.05) skewX(5deg); image-rendering: pixelated; }
+            100% { filter: brightness(0); opacity: 0; transform: scale(0.8) translateY(30px); clip-path: inset(100% 0 0 0); }
+        }
+
+        /* UI 介面 */
         #interaction-area {
             position: absolute; bottom: max(25px, env(safe-area-inset-bottom));
             width: 100%; display: flex; flex-direction: column; align-items: center; z-index: 100;
         }
-
         #main-subtitle {
             color: #00d2ff; font-size: 15px; font-weight: bold; margin-bottom: 12px;
             text-shadow: 0 0 8px rgba(0,210,255,0.8); text-align: center; padding: 0 20px;
         }
-
         .mic-btn {
             background-color: rgba(0, 210, 255, 0.1); color: #00d2ff; border: 1px solid #00d2ff;
             padding: 14px 40px; border-radius: 50px; font-size: 16px; font-weight: bold; letter-spacing: 1px;
-            backdrop-filter: blur(10px); box-shadow: 0 0 15px rgba(0, 210, 255, 0.2); cursor: pointer;
-            transition: 0.3s;
+            backdrop-filter: blur(10px); box-shadow: 0 0 15px rgba(0, 210, 255, 0.2); cursor: pointer; transition: 0.3s;
         }
-        
         .mic-btn.active-loop { 
             background-color: rgba(255, 50, 50, 0.2); border-color: #ff4d4d; color: #ff4d4d; 
             box-shadow: 0 0 20px rgba(255, 50, 50, 0.4); animation: pulse 1.5s infinite;
         }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-
         #gear-btn { position: absolute; top: 15px; right: 15px; color: #555; background: none; border: none; font-size: 24px; z-index: 110; cursor: pointer; }
 
-        /* 設定面板 (簡化為單一上傳) */
+        /* 設定面板 */
         #settings-panel {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.96); z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center;
@@ -139,21 +135,11 @@
         .api-group { display: flex; gap: 8px; margin-bottom: 25px; }
         .api-group input { flex: 1; background: #000; border: 1px solid #333; color: #0f0; padding: 12px; border-radius: 8px; }
         .api-group button { background: #00d2ff; color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; }
-        
         .upload-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding: 15px; background: #1a1a1a; border-radius: 12px;}
         .upload-row span { font-weight: bold; color: #00d2ff; }
         .upload-btn { background: #00d2ff; color: #000; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         input[type="file"] { display: none; }
         .close-settings { width: 100%; padding: 14px; background: #00d2ff; color: #000; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; letter-spacing: 1px;}
-/* ================= 擴充：超時消散特效 ================= */
-        .dissipating .holo-image {
-            animation: sci-fi-dissipate 1.5s forwards ease-in;
-        }
-        @keyframes sci-fi-dissipate {
-            0% { filter: brightness(1.2); opacity: 1; transform: scale(1); }
-            50% { filter: brightness(2) hue-rotate(90deg); opacity: 0.8; transform: scale(1.05) skewX(5deg); image-rendering: pixelated; }
-            100% { filter: brightness(0); opacity: 0; transform: scale(0.8) translateY(30px); clip-path: inset(100% 0 0 0); }
-        }
     </style>
 </head>
 <body>
@@ -162,7 +148,8 @@
 
     <div id="cabin-container">
         <div class="holo-wrapper">
-            <div id="main-img" class="holo-image" style="--bg-img: url('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')"></div>
+            <video id="main-video" class="holo-media" autoplay loop muted playsinline style="display: none;"></video>
+            <div id="main-img" class="holo-media" style="--bg-img: none;"></div>
             <div class="scan-line"></div>
         </div>
         <div class="holo-sub" id="cabin-sub"></div>
@@ -170,7 +157,7 @@
 
     <div id="interaction-area">
         <div id="main-subtitle">SYSTEM STANDBY...</div>
-        <button id="mic-btn" class="mic-btn" onclick="toggleSystemLoop()">🎤 啟動雙向通訊</button>
+        <button id="mic-btn" class="mic-btn">🎤 啟動雙向通訊</button>
     </div>
 
     <div id="settings-panel">
@@ -183,9 +170,9 @@
             <div id="api-status" style="font-size:12px; text-align:center; color:#555; margin-bottom:15px;">WAITING FOR KEY...</div>
 
             <div class="upload-row">
-                <span>CHARACTER</span>
+                <span>MEDIA (圖片/MP4)</span>
                 <label for="up-main" class="upload-btn">UPLOAD</label>
-                <input type="file" id="up-main" accept="image/*">
+                <input type="file" id="up-main" accept="image/*,video/*">
             </div>
             
             <button class="close-settings" onclick="deploySystem()">DEPLOY SYSTEM (上線)</button>
@@ -198,7 +185,7 @@
         const apiStatus = document.getElementById('api-status');
         const apiInput = document.getElementById('api-input');
         const micBtn = document.getElementById('mic-btn');
-        const holoImages = document.querySelectorAll('.holo-image'); // 仍然用 NodeList 相容舊邏輯
+        const holoMedias = document.querySelectorAll('.holo-media');
         const container = document.getElementById('cabin-container');
 
         let API_KEY = localStorage.getItem('gemini_hologram_key') || '';
@@ -209,15 +196,11 @@
             if (key) { API_KEY = key; localStorage.setItem('gemini_hologram_key', key); apiStatus.innerText = "✅ SAVED"; } 
         }
 
-        // ================= 全局音效解鎖器 =================
+        // 音效系統
         let audioCtx;
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
         function toggleSettings(show) { 
@@ -225,22 +208,17 @@
             document.getElementById('settings-panel').style.display = show ? 'flex' : 'none'; 
         }
 
-        // ================= 更新字幕 =================
         function updateSubtitles(text) {
             mainSubtitle.innerText = text;
             cabinSub.innerText = text;
         }
 
-        // ================= 音效模組 =================
         function playBeep() {
             try {
                 initAudio();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.8, audioCtx.currentTime); 
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.type = 'sine'; osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.8, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
                 osc.connect(gain); gain.connect(audioCtx.destination);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.2);
             } catch(e) {}
@@ -249,26 +227,18 @@
         function playDeployScanSound() {
             try {
                 initAudio();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(50, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 4.5); 
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 4.5);
-                
+                osc.frequency.setValueAtTime(50, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 4.5); 
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 4.5);
                 osc.connect(gain); gain.connect(audioCtx.destination);
                 osc.start(); osc.stop(audioCtx.currentTime + 4.5);
 
                 setTimeout(() => {
                     [300, 450, 600].forEach(freq => {
-                        const o = audioCtx.createOscillator();
-                        const g = audioCtx.createGain();
-                        o.type = 'square';
-                        o.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                        g.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+                        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+                        o.type = 'square'; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                        g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
                         o.connect(g); g.connect(audioCtx.destination);
                         o.start(); o.stop(audioCtx.currentTime + 1.5);
                     });
@@ -276,226 +246,72 @@
             } catch(e) {}
         }
 
-        // ================= 掃描與上傳邏輯 =================
-        function deploySystem() {
-            toggleSettings(false);
-            updateSubtitles("INITIALIZING...");
-            
-            container.classList.add('scanning');
-            playDeployScanSound();
-            holoImages.forEach(img => img.classList.remove('idle-breathe'));
-            
-            let startTime = null;
-            const duration = 4500;
-
-            function animate(timestamp) {
-                if (!startTime) startTime = timestamp;
-                const elapsed = timestamp - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                
-                document.documentElement.style.setProperty('--p', (progress * 100));
-
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    container.classList.remove('scanning');
-                    holoImages.forEach(img => img.classList.add('idle-breathe'));
-                    updateSubtitles("CABIN SYSTEM ONLINE");
-resetStandbyTimer();
-                }
-            }
-            requestAnimationFrame(animate);
-        }
-
-        document.getElementById('up-main').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) { 
-                    document.getElementById('main-img').style.setProperty('--bg-img', `url('${e.target.result}')`); 
-                    playBeep(); 
-                    document.querySelector(`label[for="up-main"]`).innerText = "SET";
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // ================= 雙向通訊系統 =================
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let recognition = null;
-        let isSystemActive = false; 
-        let isWaitingForGemini = false;
-
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.lang = 'zh-TW';
-            
-            recognition.onstart = () => { updateSubtitles("LISTENING..."); };
-            
-            recognition.onresult = (e) => { 
-                const text = e.results[0][0].transcript; 
-                updateSubtitles(`User: ${text}`); 
-                sendToGemini(text); 
-            };
-
-            recognition.onerror = (e) => {
-                if(e.error !== 'no-speech') {
-                    updateSubtitles(`Mic Error: ${e.error}`);
-                    stopSystemLoop();
-                }
-            };
-
-            recognition.onend = () => { 
-                if (isSystemActive && !isWaitingForGemini) {
-                    setTimeout(() => { try { recognition.start(); } catch(e){} }, 300);
-                }
-            };
-        }
-
-        function toggleSystemLoop() {
-            if (!API_KEY) { updateSubtitles("ERROR: API KEY MISSING"); return; }
-            
-            isSystemActive = !isSystemActive; 
-
-            if (isSystemActive) {
-                micBtn.classList.add('active-loop');
-                micBtn.innerText = "🛑 通訊連線中 (點擊關閉)";
-                
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                    window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); 
-                }
-                isWaitingForGemini = false;
-                try { recognition.start(); } catch(e){}
-
-            } else {
-                stopSystemLoop();
-            }
-        }
-
-        function stopSystemLoop() {
-            isSystemActive = false;
-            isWaitingForGemini = false;
-            micBtn.classList.remove('active-loop');
-            micBtn.innerText = "🎤 啟動雙向通訊";
-            updateSubtitles("SYSTEM STANDBY");
-            recognition.stop();
-        }
-
-        // ================= Gemini API =================
-        async function sendToGemini(userText) {
-            isWaitingForGemini = true; 
-            updateSubtitles("PROCESSING...");
-            
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
-            
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: userText }] }],
-                        systemInstruction: { parts: [{ text: "你是一個科幻的全息艙 AI 助理。講話極度簡短、專業。每次回覆不得超過 20 字。" }] }
-                    })
-                });
-                
-                const data = await response.json();
-
-                if (!response.ok) {
-                    if (response.status === 429) {
-                        updateSubtitles("⚠️ 請求頻繁，請等待 1 分鐘");
-                    } else if (response.status === 503) {
-                        updateSubtitles("⚠️ 系統忙碌中 (503)，請重試");
-                    } else {
-                        updateSubtitles(`SYS_ERR: ${response.status}`);
-                    }
-                    isWaitingForGemini = false;
-                    return;
-                }
-
-                const replyText = data.candidates[0].content.parts[0].text;
-                updateSubtitles(replyText);
-                speak(replyText);
-                
-            } catch (error) {
-                updateSubtitles("CONNECTION_FAIL");
-                isWaitingForGemini = false;
-            }
-        }
-
-        function speak(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const msg = new SpeechSynthesisUtterance(text);
-                msg.lang = 'zh-TW';
-                
-                msg.onstart = () => holoImages.forEach(i => i.classList.add('is-talking'));
-                
-                msg.onend = () => {
-                    holoImages.forEach(i => i.classList.remove('is-talking'));
-                    isWaitingForGemini = false;
-                    
-                    if (isSystemActive) {
-                        setTimeout(() => { try { recognition.start(); } catch(e){} }, 500);
-                    }
-resetStandbyTimer();
-                };
-                window.speechSynthesis.speak(msg);
-            }
-        }
-// ================= 擴充：20秒待命消散與喚醒系統 =================
-        let standbyTimer = null;
-        let isHoloAwake = true;
-        const STANDBY_LIMIT = 20000; // 20秒
-
-        // 重新計算 20 秒
-        function resetStandbyTimer() {
-            clearTimeout(standbyTimer);
-            if (isHoloAwake) {
-                standbyTimer = setTimeout(dissipateHolo, STANDBY_LIMIT);
-            }
-        }
-
-        // 科技斷電音效 (音調往下掉)
         function playPowerDownSound() {
             try {
                 initAudio();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 1.2);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 1.2);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
                 osc.connect(gain); gain.connect(audioCtx.destination);
                 osc.start(); osc.stop(audioCtx.currentTime + 1.2);
             } catch(e) {}
         }
 
-        // 執行消散
+        // ================= 💡 動態檔案判斷引擎 =================
+        document.getElementById('up-main').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // URL.createObjectURL 讓手機瞬間載入高畫質媒體，不吃效能
+            const fileURL = URL.createObjectURL(file);
+            const imgEl = document.getElementById('main-img');
+            const vidEl = document.getElementById('main-video');
+
+            // 判斷是否為影片
+            if (file.type.startsWith('video/')) {
+                imgEl.style.display = 'none';
+                vidEl.style.display = 'block';
+                vidEl.src = fileURL;
+            } else {
+                vidEl.style.display = 'none';
+                imgEl.style.display = 'block';
+                imgEl.style.setProperty('--bg-img', `url('${fileURL}')`);
+            }
+
+            playBeep(); 
+            document.querySelector(`label[for="up-main"]`).innerText = "SET";
+        });
+
+        // ================= 20秒待命消散與喚醒系統 =================
+        let standbyTimer = null;
+        let isHoloAwake = false;
+        const STANDBY_LIMIT = 20000;
+
+        function resetStandbyTimer() {
+            clearTimeout(standbyTimer);
+            if (isHoloAwake) standbyTimer = setTimeout(dissipateHolo, STANDBY_LIMIT);
+        }
+
         function dissipateHolo() {
             if (!isHoloAwake) return;
             isHoloAwake = false;
-            stopSystemLoop(); // 強制關閉麥克風
+            stopSystemLoop();
             updateSubtitles("SYSTEM SLEEP (等待喚醒)");
             playPowerDownSound();
-            
             container.classList.add('dissipating');
-            
-            // 1.5秒動畫結束後，徹底將變數歸零隱藏
             setTimeout(() => {
                 document.documentElement.style.setProperty('--p', 0);
                 container.classList.remove('dissipating');
             }, 1500);
         }
 
-        // 執行重新喚醒
         function wakeUpHolo() {
             isHoloAwake = true;
             updateSubtitles("SYSTEM WAKE UP...");
             container.classList.add('scanning');
-            playDeployScanSound(); // 借用上線時的 4.5 秒科技音效
-            holoImages.forEach(img => img.classList.remove('idle-breathe'));
+            playDeployScanSound();
+            holoMedias.forEach(m => m.classList.remove('idle-breathe'));
             
             let startTime = null;
             function animate(timestamp) {
@@ -507,39 +323,132 @@ resetStandbyTimer();
                     requestAnimationFrame(animate);
                 } else {
                     container.classList.remove('scanning');
-                    holoImages.forEach(img => img.classList.add('idle-breathe'));
+                    holoMedias.forEach(m => m.classList.add('idle-breathe'));
                     updateSubtitles("CABIN SYSTEM ONLINE");
-                    resetStandbyTimer(); // 喚醒後開始算 20 秒
-                    
-                    // 喚醒完成後，自動打開麥克風聽指令 (如果不需要自動聽，可刪除此行)
-                    setTimeout(toggleSystemLoop, 500);
+                    resetStandbyTimer(); 
+                    setTimeout(toggleSystemLoop, 500); // 喚醒後自動開始聆聽
                 }
             }
             requestAnimationFrame(animate);
         }
 
-        // ================= 攔截實體按鈕 (空白鍵 / 畫面點擊) =================
+        function deploySystem() {
+            toggleSettings(false);
+            wakeUpHolo();
+        }
+
+        // ================= 攔截實體按鈕 (藍牙遙控器/空白鍵) =================
         function handleInteraction(e) {
-            if (e && e.type === 'keydown' && e.keyCode !== 32) return; // 只管空白鍵
+            if (e && e.type === 'keydown' && e.keyCode !== 32) return;
             if (e) e.preventDefault();
 
             if (!isHoloAwake) {
-                wakeUpHolo(); // 如果睡著了，就喚醒並重生圖片與音效
+                wakeUpHolo(); 
             } else {
-                resetStandbyTimer(); // 如果醒著，就重置20秒倒數
-                toggleSystemLoop(); // 並開關麥克風
+                resetStandbyTimer(); 
+                toggleSystemLoop(); 
+            }
+        }
+        window.addEventListener('keydown', handleInteraction);
+        document.getElementById('interaction-area').addEventListener('click', function(e) {
+            if(e.target.id !== 'mic-btn') handleInteraction();
+        });
+        document.getElementById('mic-btn').onclick = handleInteraction;
+
+
+        // ================= 雙向通訊與語音辨識 =================
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isSystemActive = false; 
+        let isWaitingForGemini = false;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'zh-TW';
+            recognition.onstart = () => { updateSubtitles("LISTENING..."); };
+            recognition.onresult = (e) => { 
+                const text = e.results[0][0].transcript; 
+                updateSubtitles(`User: ${text}`); 
+                sendToGemini(text); 
+            };
+            recognition.onerror = (e) => {
+                if(e.error !== 'no-speech') {
+                    updateSubtitles(`Mic Error: ${e.error}`); stopSystemLoop();
+                }
+            };
+            recognition.onend = () => { 
+                if (isSystemActive && !isWaitingForGemini) {
+                    setTimeout(() => { try { recognition.start(); } catch(e){} }, 300);
+                }
+            };
+        }
+
+        function toggleSystemLoop() {
+            if (!API_KEY) { updateSubtitles("ERROR: API KEY MISSING"); return; }
+            isSystemActive = !isSystemActive; 
+            if (isSystemActive) {
+                micBtn.classList.add('active-loop');
+                micBtn.innerText = "🛑 通訊連線中 (點擊關閉)";
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel(); window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); 
+                }
+                isWaitingForGemini = false;
+                try { recognition.start(); } catch(e){}
+            } else {
+                stopSystemLoop();
             }
         }
 
-        // 綁定鍵盤與畫面點擊
-        window.addEventListener('keydown', handleInteraction);
-        // 如果用 iPhone 切換控制點擊畫面，會觸發這裡
-        document.getElementById('interaction-area').addEventListener('click', function(e) {
-            // 避免點擊按鈕時觸發兩次
-            if(e.target.id !== 'mic-btn') handleInteraction();
-        });
-        // 覆寫原本語音按鈕的 onclick
-        document.getElementById('mic-btn').onclick = handleInteraction;
+        function stopSystemLoop() {
+            isSystemActive = false; isWaitingForGemini = false;
+            micBtn.classList.remove('active-loop'); micBtn.innerText = "🎤 啟動雙向通訊";
+            updateSubtitles("SYSTEM STANDBY"); recognition.stop();
+        }
+
+        async function sendToGemini(userText) {
+            isWaitingForGemini = true; updateSubtitles("PROCESSING...");
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userText }] }],
+                        systemInstruction: { parts: [{ text: "你是一個科幻的全息艙 AI 助理。講話極度簡短、專業。每次回覆不得超過 20 字。" }] }
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    if (response.status === 429) updateSubtitles("⚠️ 請求頻繁，請等待 1 分鐘");
+                    else if (response.status === 503) updateSubtitles("⚠️ 系統忙碌中 (503)，請重試");
+                    else updateSubtitles(`SYS_ERR: ${response.status}`);
+                    isWaitingForGemini = false; return;
+                }
+                const replyText = data.candidates[0].content.parts[0].text;
+                updateSubtitles(replyText); speak(replyText);
+            } catch (error) {
+                updateSubtitles("CONNECTION_FAIL"); isWaitingForGemini = false;
+            }
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const msg = new SpeechSynthesisUtterance(text);
+                msg.lang = 'zh-TW';
+                
+                msg.onstart = () => holoMedias.forEach(m => m.classList.add('is-talking'));
+                
+                msg.onend = () => {
+                    holoMedias.forEach(m => m.classList.remove('is-talking'));
+                    isWaitingForGemini = false;
+                    resetStandbyTimer(); 
+                    if (isSystemActive) {
+                        setTimeout(() => { try { recognition.start(); } catch(e){} }, 500);
+                    }
+                };
+                window.speechSynthesis.speak(msg);
+            }
+        }
     </script>
 </body>
 </html>
