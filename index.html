@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI 全息艙 - 動態生命體版</title>
+    <title>AI 全息艙 - 像素崩解版</title>
     <style>
         :root { --p: 0; }
 
@@ -26,7 +26,7 @@
             box-shadow: 0 -15px 30px -15px rgba(0,210,255,0.3), 0 15px 30px -15px rgba(0,210,255,0.3);
             border-radius: 20px;
             display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-            transform: rotate(180deg); /* 鏡像翻轉，適應實體艙 */
+            transform: rotate(180deg);
         }
 
         .holo-wrapper {
@@ -34,12 +34,12 @@
             position: relative;
         }
 
-        /* 💡 雙引擎共用樣式 (支援 img 與 video) */
+        /* 雙引擎共用樣式 (支援 img 與 video) */
         .holo-media {
             width: 100%; height: 100%;
             position: absolute; bottom: 0; left: 0;
             background-size: contain; background-repeat: no-repeat; background-position: center bottom;
-            object-fit: contain; /* 專為 video 比例設計 */
+            object-fit: contain; 
             clip-path: inset(calc(100% - (var(--p) * 1%)) 0 0 0);
             filter: brightness(1.2);
             z-index: 1;
@@ -95,14 +95,55 @@
             100% { clip-path: inset(95% 0 0% 0); transform: translateY(1px); }
         }
 
-        /* 💡 擴充：20秒超時消散特效 */
+        /* 💡 終極進化：科技方塊粒子崩解特效 */
         .dissipating .holo-media {
-            animation: sci-fi-dissipate 1.5s forwards ease-in;
+            /* 使用 steps(6) 製造數位斷訊的卡頓感 */
+            animation: pixel-shatter 1.2s forwards steps(6);
+            image-rendering: pixelated; /* 強制影像變為顆粒像素 */
         }
-        @keyframes sci-fi-dissipate {
-            0% { filter: brightness(1.2); opacity: 1; transform: scale(1); }
-            50% { filter: brightness(2) hue-rotate(90deg); opacity: 0.8; transform: scale(1.05) skewX(5deg); image-rendering: pixelated; }
-            100% { filter: brightness(0); opacity: 0; transform: scale(0.8) translateY(30px); clip-path: inset(100% 0 0 0); }
+        
+        @keyframes pixel-shatter {
+            0% {
+                -webkit-mask-image: linear-gradient(to bottom, black 100%, transparent 100%);
+                mask-image: linear-gradient(to bottom, black 100%, transparent 100%);
+                opacity: 1; filter: brightness(1); transform: scale(1);
+            }
+            20% {
+                /* 階段 1：水平橫條切片 */
+                -webkit-mask-image: repeating-linear-gradient(to bottom, black 0%, black 70%, transparent 70%, transparent 100%);
+                -webkit-mask-size: 100% 20px;
+                mask-image: repeating-linear-gradient(to bottom, black 0%, black 70%, transparent 70%, transparent 100%);
+                mask-size: 100% 20px;
+                opacity: 0.9; filter: brightness(1.5) hue-rotate(90deg); transform: scale(1.02) skewX(3deg) translateX(-2px);
+            }
+            40% {
+                /* 階段 2：垂直數位條碼 */
+                -webkit-mask-image: repeating-linear-gradient(to right, black 0%, black 50%, transparent 50%, transparent 100%);
+                -webkit-mask-size: 15px 100%;
+                mask-image: repeating-linear-gradient(to right, black 0%, black 50%, transparent 50%, transparent 100%);
+                mask-size: 15px 100%;
+                opacity: 0.7; filter: brightness(2) contrast(2) hue-rotate(-90deg); transform: scale(0.98) skewX(-4deg) translateX(3px);
+            }
+            60% {
+                /* 階段 3：大塊十字方塊交錯 */
+                -webkit-mask-image: repeating-linear-gradient(45deg, black 0%, black 40%, transparent 40%, transparent 100%);
+                -webkit-mask-size: 16px 16px;
+                mask-image: repeating-linear-gradient(45deg, black 0%, black 40%, transparent 40%, transparent 100%);
+                mask-size: 16px 16px;
+                opacity: 0.5; filter: brightness(3) invert(0.3); transform: scale(0.95) translateY(5px);
+            }
+            80% {
+                /* 階段 4：碎裂成細小像素粒子 */
+                -webkit-mask-image: repeating-linear-gradient(-45deg, black 0%, black 20%, transparent 20%, transparent 100%);
+                -webkit-mask-size: 6px 6px;
+                mask-image: repeating-linear-gradient(-45deg, black 0%, black 20%, transparent 20%, transparent 100%);
+                mask-size: 6px 6px;
+                opacity: 0.3; filter: brightness(4) blur(1px); transform: scale(0.9) translateY(10px);
+            }
+            100% {
+                /* 完全消散 */
+                opacity: 0; filter: brightness(0); transform: scale(0.8) translateY(20px);
+            }
         }
 
         /* UI 介面 */
@@ -258,17 +299,15 @@
             } catch(e) {}
         }
 
-        // ================= 💡 動態檔案判斷引擎 =================
+        // 動態檔案判斷引擎
         document.getElementById('up-main').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
 
-            // URL.createObjectURL 讓手機瞬間載入高畫質媒體，不吃效能
             const fileURL = URL.createObjectURL(file);
             const imgEl = document.getElementById('main-img');
             const vidEl = document.getElementById('main-video');
 
-            // 判斷是否為影片
             if (file.type.startsWith('video/')) {
                 imgEl.style.display = 'none';
                 vidEl.style.display = 'block';
@@ -303,7 +342,7 @@
             setTimeout(() => {
                 document.documentElement.style.setProperty('--p', 0);
                 container.classList.remove('dissipating');
-            }, 1500);
+            }, 1200); // 配合 CSS 動畫長度 1.2s
         }
 
         function wakeUpHolo() {
@@ -326,7 +365,7 @@
                     holoMedias.forEach(m => m.classList.add('idle-breathe'));
                     updateSubtitles("CABIN SYSTEM ONLINE");
                     resetStandbyTimer(); 
-                    setTimeout(toggleSystemLoop, 500); // 喚醒後自動開始聆聽
+                    setTimeout(toggleSystemLoop, 500); 
                 }
             }
             requestAnimationFrame(animate);
