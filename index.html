@@ -18,9 +18,10 @@
         /* 💡 全息艙主體 (模擬圓柱或玻璃力場的感覺) */
         #cabin-container {
             position: relative; 
-            width: 85vw; max-width: 350px; 
-            height: 60vh; max-height: 500px;
-            margin-bottom: 60px;
+           /* 將最大寬度限制在 280px (約等於手機螢幕的 7.5 公分比例) */
+            width: 85vw; max-width: 280px; 
+            height: 45vh; max-height: 400px;
+            margin-bottom: 20vh;
             /* 科幻邊框與底光 */
             border-top: 3px solid rgba(0, 210, 255, 0.5);
             border-bottom: 3px solid rgba(0, 210, 255, 0.5);
@@ -28,6 +29,8 @@
             box-shadow: 0 -15px 30px -15px rgba(0,210,255,0.3), 0 15px 30px -15px rgba(0,210,255,0.3);
             border-radius: 20px;
             display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+/* 讓畫面上下顛倒，反射後才是正的 */
+            transform: rotate(180deg);
         }
 
         /* 取消四面梯形，改為全版面 */
